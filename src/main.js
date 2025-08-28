@@ -28,7 +28,7 @@ Pero si hacemos:
 No funciona. Porque npm va a buscar una carpeta "App.vue" dentro de la
 carpeta [node_modules].
 */
-import "./bootstrap.min.css";
+// import "./bootstrap.min.css";
 import "./style.css";
 import { createApp } from "vue";
 import router from "./router/router";

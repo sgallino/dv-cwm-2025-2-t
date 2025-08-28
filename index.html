@@ -1,13 +1,35 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" class="h-full">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DV Social</title>
   </head>
-  <body>
-    <div id="app"></div>
+  <body class="h-full">
+    <!-- 
+    # Cómo manejar valores arbitrarios para los estilos en Tailwind
+    Tailwind incluye una inmensa cantidad de estilos desde el vamos.
+    Pero siempre va a pasar que necesitemos poner valores que son
+    específicos de nuestro proyecto. Por ejemplo, las dimensiones
+    de una grilla:
+        grid-template-rows: 60px 1fr 100px;
+    
+    En esos casos, Tailwind permite que la parte del <valor> del
+    nombre de la clase se escriba entre corchetes con el valor
+    que queremos que tenga.
+    Por ejemplo:
+        p-[25px]                          padding: 25px;
+        w-[calc(100%-2rem)]               width: calc(100% - 2rem);
+    
+    Importante: En el atributo class, los espacios indican la 
+    separación de una clase de otra.
+    Si nuestro valor contiene espacios, deben reemplazarse con 
+    "_".
+    Por ejemplo:
+        .grid-rows-[60px_1fr_100px]       grid-template-rows: 60px 1fr 100px;
+    -->
+    <div id="app" class="grid grid-rows-[60px_1fr_100px] h-full"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

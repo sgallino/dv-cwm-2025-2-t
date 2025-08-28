@@ -1,8 +1,19 @@
-html, body, #app {
+@import 'tailwindcss';
+
+@layer components {
+  h1 {
+    /* margin-bottom: 1rem;
+    font-size: 1.875rem;
+    line-height: 1.2; */
+    @apply mb-4 text-3xl;
+  }
+}
+
+/* html, body, #app {
   height: 100%;
 }
 
 #app {
   display: grid;
   grid-template-rows: 56px 1fr 100px;
-}
+} */

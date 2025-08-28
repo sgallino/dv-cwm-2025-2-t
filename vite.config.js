@@ -16,9 +16,10 @@
 // Las "dev dependencies" solo son necesarias en los entornos de desarrollo
 // o testing. Y no deberían instalarse en entornos de producción.
 import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
 
 export default {
     // La propiedad "plugins" contiene un array de plugins.
     // Cada plugin suele crearse llamando a alguna función.
-    plugins: [vue()],
+    plugins: [vue(), tailwindcss()],
 }
