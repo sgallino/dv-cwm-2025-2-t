@@ -1,6 +1,6 @@
 <script>
 import AppH1 from '../components/AppH1.vue';
-import { supabase } from '../services/supabase';
+import { fetchLastGlobalChatMessages, sendGlobalChatMessage, subscribeToNewGlobalChatMessages } from '../services/global-chat';
 
 export default {
     name: 'GlobalChat',
@@ -23,32 +23,57 @@ export default {
         }
     },
     methods: {
-        handleSubmit() {
-            this.messages.push({
-                id: this.messages.length,
-                email: this.newMessage.email,
-                content: this.newMessage.content,
-                created_at: new Date(),
-            });
+        async handleSubmit() {
+            try {
+                await sendGlobalChatMessage({
+                    email: this.newMessage.email,
+                    content: this.newMessage.content,
+                });
+            } catch (error) {
+                // TODO...
+            }
             
             this.newMessage.content = '';
         }
     },
     async mounted() {
-        // A través del objeto del cliente de Supabase podemos acceder a todas sus funcionalidades.
-        // La principal es el método ".from()".
-        // Es muy importante el "await". Podríamos decir que es el await el que ejecuta la consulta.
-        const { data, error } = await supabase
-            // from() nos permite interactuar con alguna tabla de nuestra base.
-            .from('global_chat_messages')
-            // Entre los métodos que from() tiene, select() ejecuta un SELECT de la consulta.
-            .select();
+        // TODO: Arrancar con la autenticación con Supabase :D
+        subscribeToNewGlobalChatMessages(async newMessage => {
+            this.messages.push(newMessage);
+            
+            await this.$nextTick();
+            
+            this.$refs.chatContainer.scrollTop = this.$refs.chatContainer.scrollHeight;
+        });
 
-        if(error) {
-            throw new Error(error);
-        }
+        this.messages = await fetchLastGlobalChatMessages();
 
-        this.messages = data;
+        // Accedemos al "template ref" con la propiedad especial $refs de Vue.
+        // console.log("Altura del scroll: ", this.$refs.chatContainer.scrollHeight);
+
+        /*
+        # nextTick
+        Vue, cuando detecta un cambio que requiere actualizar el DOM, no lo aplica automáticamente.
+        Sino que espera a ver si no hay otras instrucciones que también vayan a requerir tocar el DOM.
+        Esto es con el fin de poder agrupar en un "batch" de modificaciones todos los cambios, y así
+        solo manipular el DOM una vez.
+
+        Es importante que Vue haga esto, porque el renderizado de la página es una de las tareas más
+        pesadas que puede realizar un browser.
+
+        En la mayoría de los casos, ni nos enteramos de que esto pasa.
+        Pero hay ocasiones, como esta, donde nosotros necesitamos esperar a que Vue actualice el DOM
+        antes de realizar la próxima acción.
+        Para poder mover el scroll, necesitamos que se actualice el contenido del <section> con los
+        nuevos mensajes.
+
+        Ahí es donde entre nextTick().
+        Esta función retorna una Promise que se resuelve cuando Vue actualiza el DOM.
+        */
+        await this.$nextTick();
+        
+        // console.log("Altura del scroll: ", this.$refs.chatContainer.scrollHeight);
+        this.$refs.chatContainer.scrollTop = this.$refs.chatContainer.scrollHeight;
     }
 }
 </script>
@@ -57,7 +82,13 @@ export default {
     <AppH1>Chat general</AppH1>
 
     <div class="flex gap-4">
-        <section class="overflow-y-auto w-9/12 h-100 p-4 border border-gray-200 rounded">
+        <!-- 
+        # Template refs
+        El atributo "ref" permite hacer disponible un elemento como un "template ref".
+        Esto es, que desde el <script> Vue nos permite acceder al elemento de HTML que le corresponde.
+        Recibe como valor un nombre / id.
+        -->
+        <section class="overflow-y-auto w-9/12 h-100 p-4 border border-gray-200 rounded" ref="chatContainer">
             <h2 class="sr-only">Lista de mensajes</h2>
             <!-- 
             Los atributos que empiezan con "v-" se conocen como "directivas".
