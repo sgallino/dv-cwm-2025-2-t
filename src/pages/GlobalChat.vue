@@ -37,7 +37,6 @@ export default {
         }
     },
     async mounted() {
-        // TODO: Arrancar con la autenticación con Supabase :D
         subscribeToNewGlobalChatMessages(async newMessage => {
             this.messages.push(newMessage);
             
