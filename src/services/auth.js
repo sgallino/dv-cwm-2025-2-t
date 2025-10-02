@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { createUserProfile, getUserProfileById, updateUserProfile } from "./user-profiles";
 
 /*
 # Ofreciendo los datos del estado de autenticación con el patrón Observer
@@ -35,6 +36,9 @@ Para implementar este patrón, necesitamos cumplir con algunos requisitos:
 let user = {
     id: null,
     email: null,
+    display_name: null,
+    bio: null,
+    career: null,
 }
 let observers = [];
 
@@ -55,6 +59,22 @@ async function loadCurrentUserAuthState() {
         id: data.user.id,
         email: data.user.email,
     });
+
+    // En paralelo, dejamos cargando el perfil completo del usuario.
+    fetchFullProfile();
+}
+
+/**
+ * Carga la data del perfil completo del usaurio.
+ */
+async function fetchFullProfile() {
+    try {
+        // const userProfile = await getUserProfileById(user.id);
+        // setUser(userProfile);
+        setUser(await getUserProfileById(user.id));
+    } catch (error) {
+        // TODO...
+    }
 }
 
 /**
@@ -63,28 +83,38 @@ async function loadCurrentUserAuthState() {
  * @param {String} password 
  */
 export async function register(email, password) {
-    // Para interactuar con la autenticación de Supabase, podemos usar el objeto "auth" del cliente de Supabase.
-    // Este objeto tiene varios métodos para interactuar con este sistema, incluyendo el método "signUp" para
-    // registrarnos.
-    // Recibe un objeto como parámetro. Debe contener los detalles del usuario a registrar.
-    // En nuestro caso, vamos a pasarle el email y el password. Pero puede recibir otros datos como un "phone" en
-    // vez del email, una propiedad "options", etc.
-    // Retorna el clásico objeto de Response de Supabase, que contiene las propiedades "data" y "error".
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-    });
+    try {
+        // Para interactuar con la autenticación de Supabase, podemos usar el objeto "auth" del cliente de Supabase.
+        // Este objeto tiene varios métodos para interactuar con este sistema, incluyendo el método "signUp" para
+        // registrarnos.
+        // Recibe un objeto como parámetro. Debe contener los detalles del usuario a registrar.
+        // En nuestro caso, vamos a pasarle el email y el password. Pero puede recibir otros datos como un "phone" en
+        // vez del email, una propiedad "options", etc.
+        // Retorna el clásico objeto de Response de Supabase, que contiene las propiedades "data" y "error".
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+        });
 
-    if(error) {
-        console.error('[auth.js register] Error al registrar el usuario.', error);
-        throw new Error(error.message);
+        if(error) {
+            console.error('[auth.js register] Error al registrar el usuario.', error);
+            throw new Error(error.message);
+        }
+
+        // Creamos el perfil del usuario.
+        await createUserProfile({
+            id: data.user.id,
+            email: data.user.email,
+        });
+
+        // console.log("Usuario creado con éxito: ", data);
+        setUser({
+            id: data.user.id,
+            email: data.user.email,
+        });
+    } catch (error) {
+        // TODO...
     }
-
-    // console.log("Usuario creado con éxito: ", data);
-    setUser({
-        id: data.user.id,
-        email: data.user.email,
-    });
 }
 
 /**
@@ -108,6 +138,8 @@ export async function login(email, password) {
         id: data.user.id,
         email: data.user.email,
     });
+
+    fetchFullProfile();
 }
 
 export async function logout() {
@@ -119,12 +151,27 @@ export async function logout() {
     });
 }
 
+/**
+ * 
+ * @param {{display_name?: String|null, bio?: String|null, career?: String|null}} data
+ */
+export async function updateAuthUser(data) {
+    try {
+        await updateUserProfile(user.id, data);
+
+        // Actualizamos los datos locales del perfil con la nueva info.
+        setUser(data);
+    } catch (error) {
+        // TODO
+    }
+}
+
 /*------------------------------------------------------------------------------
 | Implementación del Observer
 +-------------------------------------------------------------------------------*/
 /**
  * 
- * @param {(userState: {id: null|String, email: null|String}) => void} callback El observer a adjuntar.
+ * @param {(userState: {id: null|String, email: null|String, display_name: null|String, bio: null|String, career: null|String}) => void} callback El observer a adjuntar.
  */
 export function subscribeToAuthStateChanges(callback) {
     // El proceso de suscripción de un observer es, simplemente, agregarlo en nuestro array de observers.
@@ -132,12 +179,24 @@ export function subscribeToAuthStateChanges(callback) {
     // De esta forma, tan pronto se suscriba, va a poder usar la info actual.
     observers.push(callback);
 
+    // console.log("Nuevo observer agregado. El stack actual es: ", observers);
+    
     notify(callback);
+
+    // Siempre que trabajamos con algún tipo de suscripción es esencial que brindemos alguna forma de
+    // cancelar o terminar esa suscripción.
+    // Si no lo hacemos, nuestro código va a tener "memory leaks".
+    // Vamos a, pues, retornar una nueva función que al ejecutarse cancele la suscripción ("unsubscribe").
+    return () => {
+        observers = observers.filter(obs => callback != obs);
+
+        // console.log("Observer removido. El stack actual es: ", observers);
+    }
 }
 
 /**
  * 
- * @param {(userState: {id: null|String, email: null|String}) => void} callback 
+ * @param {(userState: {id: null|String, email: null|String, display_name: null|String, bio: null|String, career: null|String}) => void} callback 
  */
 function notify(callback) {
     callback({

@@ -25,12 +25,13 @@ export async function fetchLastGlobalChatMessages() {
 
 /**
  * 
- * @param {{email: string, content: string}} data 
+ * @param {{sender_id: string, email: string, content: string}} data 
  */
-export async function sendGlobalChatMessage({email, content}) {
+export async function sendGlobalChatMessage({sender_id, email, content}) {
     const { data, error } = await supabase
         .from('global_chat_messages')
         .insert({
+            sender_id,
             email,
             content,
         });
@@ -69,7 +70,6 @@ export function subscribeToNewGlobalChatMessages(callback) {
             schema: 'public',
         },
         payload => {
-            // console.log('Recibimos el mensaje: ', payload);
             // this.messages.push(payload.new);
             // Invocamos el callback que nos pasan, brindándole los datos nuevos.
             callback(payload.new);
@@ -80,4 +80,9 @@ export function subscribeToNewGlobalChatMessages(callback) {
     // Todo lo previo es configuración. Para que tenga efecto, debemos recordar
     // suscribirnos.
     chatChannel.subscribe();
+
+    // Retornamos una función que cancele la suscripción.
+    return () => {
+        chatChannel.unsubscribe();
+    }
 }

@@ -1,6 +1,10 @@
 <script>
 import AppH1 from '../components/AppH1.vue';
+import { subscribeToAuthStateChanges } from '../services/auth';
 import { fetchLastGlobalChatMessages, sendGlobalChatMessage, subscribeToNewGlobalChatMessages } from '../services/global-chat';
+
+let unsubscribeFromAuth = () => {};
+let unsubscribeFromChat = () => {};
 
 export default {
     name: 'GlobalChat',
@@ -17,8 +21,14 @@ export default {
         return {
             messages: [],
             newMessage: {
-                email: '',
                 content: '',
+            },
+            user: {
+                id: null,
+                email: null,
+                display_name: null,
+                bio: null,
+                career: null,
             }
         }
     },
@@ -26,7 +36,8 @@ export default {
         async handleSubmit() {
             try {
                 await sendGlobalChatMessage({
-                    email: this.newMessage.email,
+                    sender_id: this.user.id,
+                    email: this.user.email,
                     content: this.newMessage.content,
                 });
             } catch (error) {
@@ -34,10 +45,15 @@ export default {
             }
             
             this.newMessage.content = '';
+        },
+        getLinkForUser(senderId) {
+            return this.user.id !== senderId ? `/usuario/${senderId}` : '/mi-perfil';
         }
     },
     async mounted() {
-        subscribeToNewGlobalChatMessages(async newMessage => {
+        unsubscribeFromAuth = subscribeToAuthStateChanges(newUserState => this.user = newUserState);
+
+        unsubscribeFromChat = subscribeToNewGlobalChatMessages(async newMessage => {
             this.messages.push(newMessage);
             
             await this.$nextTick();
@@ -73,7 +89,11 @@ export default {
         
         // console.log("Altura del scroll: ", this.$refs.chatContainer.scrollHeight);
         this.$refs.chatContainer.scrollTop = this.$refs.chatContainer.scrollHeight;
-    }
+    },
+    unmounted() {
+        unsubscribeFromAuth();
+        unsubscribeFromChat();
+    },
 }
 </script>
 
@@ -100,7 +120,10 @@ export default {
                     :key="message.id"
                     class="p-4 rounded bg-gray-100"
                 >
-                    <div class="mb-1"><span class="font-bold">{{ message.email }}</span> dijo:</div>
+                    <div class="mb-1">
+                        <RouterLink :to="getLinkForUser(message.sender_id)" class="font-bold text-blue-700">{{ message.email }}</RouterLink> 
+                        dijo:
+                    </div>
                     <div class="mb-1">{{ message.content }}</div>
                     <div class="text-sm text-gray-700">{{ message.created_at }}</div>
                 </li>
@@ -113,7 +136,11 @@ export default {
                 @submit.prevent="handleSubmit"
             >
                 <div class="mb-4">
-                    <label for="email" class="block mb-1">Email</label>
+                    <span class="block mb-1">Email</span>
+                    {{ user.email }}
+                </div>
+                <div class="mb-4">
+                    <label for="content" class="block mb-1">Mensaje</label>
                     <!-- 
                     v-model define un "two-way data binding" entre una propiedad y un control (campo)
                     de formulario.
@@ -125,15 +152,6 @@ export default {
                     Internamente, Vue usa el valor de la propiedad como la "single source of truth"
                     (el único origen de verdad).
                     -->
-                    <input
-                        type="email"
-                        id="email"
-                        class="w-full p-2 border border-gray-300 rounded"
-                        v-model="newMessage.email"
-                    >
-                </div>
-                <div class="mb-4">
-                    <label for="content" class="block mb-1">Mensaje</label>
                     <textarea
                         id="content"
                         class="w-full p-2 border border-gray-300 rounded"

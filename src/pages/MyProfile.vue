@@ -2,6 +2,8 @@
 import AppH1 from '../components/AppH1.vue';
 import { subscribeToAuthStateChanges } from '../services/auth';
 
+let unsubscribeFromAuth = () => {};
+
 export default {
     name: 'MyProfile',
     components: { AppH1, },
@@ -17,13 +19,20 @@ export default {
         }
     },
     mounted() {
-        subscribeToAuthStateChanges(newUserState => this.user = newUserState);
-    }
+        // Guardamos la función que cancela la suscripción.
+        unsubscribeFromAuth = subscribeToAuthStateChanges(newUserState => this.user = newUserState);
+    },
+    unmounted() {
+        unsubscribeFromAuth();
+    },
 }
 </script>
 
 <template>
-    <AppH1>Mi perfil</AppH1>
+    <div class="flex items-end gap-4">
+        <AppH1>Mi perfil</AppH1>
+        <RouterLink class="mb-4 text-blue-700 underline" to="/mi-perfil/editar">Editar</RouterLink>
+    </div>
 
     <div class="ms-4 my-8 text-gray-700 italic">{{ user.bio ?? 'Sin especificar...' }}</div>
 
