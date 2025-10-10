@@ -148,6 +148,9 @@ export async function logout() {
     setUser({
         id: null,
         email: null,
+        display_name: null,
+        bio: null,
+        career: null,
     });
 }
 

@@ -1,10 +1,11 @@
 <script>
+import AppButton from '../components/AppButton.vue';
 import AppH1 from '../components/AppH1.vue';
 import { login } from '../services/auth';
 
 export default {
     name: 'Login',
-    components: { AppH1, },
+    components: { AppH1, AppButton, },
     data() {
         return {
             user: {
@@ -56,6 +57,6 @@ export default {
                 v-model="user.password"
             >
         </div>
-        <button type="submit" class="transition px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 focus:bg-blue-500 active:bg-blue-700 text-white">Ingresar</button>
+        <AppButton type="submit">Ingresar</AppButton>        
     </form>
 </template>
