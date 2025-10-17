@@ -8,6 +8,7 @@ import Register from "../pages/Register.vue";
 import MyProfile from "../pages/MyProfile.vue";
 import MyProfileEdit from "../pages/MyProfileEdit.vue";
 import UserProfile from "../pages/UserProfile.vue";
+import PrivateChat from "../pages/PrivateChat.vue";
 
 // Definimos nuestro array de rutas.
 // Cada ruta debe ser un objeto que tenga al menos 2 propiedades:
@@ -24,6 +25,7 @@ const routes = [
     { path: '/mi-perfil',                           component: MyProfile,       meta: { requiresAuth: true, }, },
     { path: '/mi-perfil/editar',                    component: MyProfileEdit,   meta: { requiresAuth: true, }, },
     { path: '/usuario/:id',                         component: UserProfile,     meta: { requiresAuth: true, }, },
+    { path: '/usuario/:id/chat',                    component: PrivateChat,     meta: { requiresAuth: true, }, },
 ];
 
 // Creamos propiamente el router.
