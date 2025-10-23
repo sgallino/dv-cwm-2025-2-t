@@ -1,10 +1,7 @@
-<script>
+<script setup>
 import AppH1 from '../components/AppH1.vue';
 
-export default {
-    name: 'Home',
-    components: { AppH1, },
-}
+// En la Composition API, usando la etiqueta <script setup>, no necesitamos (ni podemos) exportar nada.
 </script>
 
 <template>
