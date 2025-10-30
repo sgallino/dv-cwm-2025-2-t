@@ -11,6 +11,8 @@ import AppH1 from '../components/AppH1.vue';
 // Por ejemplo, para obtener el router, tenemos el "composable" de Vue Router: useRouter().
 const router = useRouter();
 
+const { user, loading, handleSubmit } = useLoginForm(() => router.push('/mi-perfil'));
+
 // Para definir los datos en la Composition API, la forma recomendada es usar la función ref() de Vue (abreviatura
 // de "reactive reference").
 // La función ref lo que hace es crear un nuevo objeto que envuelve al valor. Es decir, que si hacemos:
@@ -23,24 +25,33 @@ const router = useRouter();
 // Por ejemplo:
 //  saludo.value = "Hola mundo";
 // Piénsenlo como la versión del "this." de Options en Composition.
-const user = ref({
-    email: '',
-    password: '',
-});
-const loading = ref(false);
+function useLoginForm(callback) {
+    const user = ref({
+        email: '',
+        password: '',
+    });
+    const loading = ref(false);
 
-// Los "methods" se definen como funciones comunes.
-async function handleSubmit() {
-    try {
-        loading.value = true;
+    // Los "methods" se definen como funciones comunes.
+    async function handleSubmit() {
+        try {
+            loading.value = true;
 
-        await login(user.value.email, user.value.password);
+            await login(user.value.email, user.value.password);
 
-        router.push('/mi-perfil');
-    } catch (error) {
-        // TODO:
+            // router.push('/mi-perfil');
+            callback();
+        } catch (error) {
+            // TODO:
+        }
+        loading.value = false;
     }
-    loading.value = false;
+
+    return {
+        user,
+        loading,
+        handleSubmit,
+    }
 }
 </script>
 
@@ -69,6 +80,6 @@ async function handleSubmit() {
                 v-model="user.password"
             >
         </div>
-        <AppButton type="submit">Ingresar</AppButton>        
+        <AppButton type="submit" :loading="loading">Ingresar</AppButton>        
     </form>
 </template>

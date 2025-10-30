@@ -1,31 +1,25 @@
-<script>
+<script setup>
 import AppH1 from '../components/AppH1.vue';
-import { subscribeToAuthStateChanges } from '../services/auth';
+import useAuthUserState from '../composables/useAuthUserState';
 
-let unsubscribeFromAuth = () => {};
+// La forma recomendada de trabajar con la Composition API es organizando las responsabilidades lógicas en
+// "composables".
+// Un "composable" es una función que:
+// - Por convención, llevan el prefijo "use".
+// - Utilizan al menos una de las funciones del core de Vue (ej: ref, computed, onMounted, etc).
+// - Como una buena práctica general, no deberían tener dependencias "hard-codeadas". Cualquier valor que necesiten
+//  y no define el propio "composable" debería recibirse como parámetro.
+// Luego, el componente lo único que hace es llamar a esas funciones para obtener los valores que necesita.
+// Si el composable necesita brindar información que se use en el componente (lo habitual), debe retornar esos 
+// valores.
+// Esto tiene beneficios:
+// - Facilita la eventual reutilización del código.
+// - Facilita el testing.
+// - Facilita la legibilidad del código.
+// - Facilita el mantenimiento.
+// - Evita colisiones de nombres, funciones, variables, etc, entre distintas responsabilidades.
 
-export default {
-    name: 'MyProfile',
-    components: { AppH1, },
-    data() {
-        return {
-            user: {
-                id: null,
-                email: null,
-                display_name: null,
-                bio: null,
-                career: null,
-            },
-        }
-    },
-    mounted() {
-        // Guardamos la función que cancela la suscripción.
-        unsubscribeFromAuth = subscribeToAuthStateChanges(newUserState => this.user = newUserState);
-    },
-    unmounted() {
-        unsubscribeFromAuth();
-    },
-}
+const user = useAuthUserState();
 </script>
 
 <template>

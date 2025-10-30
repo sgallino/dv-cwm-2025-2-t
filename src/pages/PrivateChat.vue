@@ -1,97 +1,87 @@
-<script>
+<script setup>
+import { nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import AppButton from '../components/AppButton.vue';
 import AppH1 from '../components/AppH1.vue';
-import { subscribeToAuthStateChanges } from '../services/auth';
 import { fetchLastPrivateChatMessages, sendPrivateChatMessage, subscribeToNewPrivateChatMessages } from '../services/private-chat';
-import { getUserProfileById } from '../services/user-profiles';
+import useAuthUserState from '../composables/useAuthUserState';
+import useUserProfile from '../composables/useUserProfile';
+import { useRoute } from 'vue-router';
+import AppLoader from '../components/AppLoader.vue';
 
-let unsubscribeFromAuth = () => {};
-let unsubscribeFromChat = () => {};
+const route = useRoute();
 
-export default {
-    name: 'PrivateChat',
-    components: { AppH1, AppButton, },
-    data() {
-        return {
-            messages: [],
-            loadingMessages: false,
+const user = useAuthUserState();
+const { user: otherUser, loading: loadingUser } = useUserProfile(route.params.id);
+const { messages, loadingMessages } = usePrivateChatMessages(user, route.params.id);
+const { newMessage, handleSubmit } = usePrivateChatMessageForm(user, route.params.id);
 
-            newMessage: {
-                content: '',
-            },
-            
-            user: {
-                id: null,
-                email: null,
-                display_name: null,
-                bio: null,
-                career: null,
-            },
+function usePrivateChatMessages(user, otherId) {
+    let unsubscribeFromChat = () => {};
 
-            otherUser: {
-                id: null,
-                email: null,
-                display_name: null,
-                bio: null,
-                career: null,
-            },
-            loadingUser: false,
-        }
-    },
-    methods: {
-        async handleSubmit() {
-            try {
-                sendPrivateChatMessage(
-                    this.user.id,
-                    this.$route.params.id,
-                    this.newMessage.content,
-                );
-            } catch (error) {
-                // TODO...
-            }
-            
-            this.newMessage.content = '';
-        }
-    },
-    async mounted() {
+    const messages = ref([]);
+    const loadingMessages = ref(false);
+
+    onMounted(async () => {
         try {
-            this.loadingUser = true;
-            this.loadingMessages = true;
+            const chatContainer = useTemplateRef('chatContainer');
+            loadingMessages.value = true;
             
-            unsubscribeFromAuth = subscribeToAuthStateChanges(newUserState => this.user = newUserState);
-            
-            getUserProfileById(this.$route.params.id)
-                .then(userProfile => this.otherUser = userProfile);
-
             unsubscribeFromChat = await subscribeToNewPrivateChatMessages(
-                this.user.id, 
-                this.$route.params.id,
+                user.value.id, 
+                otherId,
                 async newMessage => {
-                    this.messages.push(newMessage);
+                    messages.value.push(newMessage);
 
-                    await this.$nextTick();
-                    this.$refs.chatContainer.scrollTop = this.$refs.chatContainer.scrollHeight;
+                    await nextTick();
+                    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
                 },
             );
             
-            fetchLastPrivateChatMessages(this.user.id, this.$route.params.id)
+            fetchLastPrivateChatMessages(user.value.id, otherId)
                 .then(async lastMessages => {
-                    this.messages = lastMessages;
-                    this.loadingMessages = false;
+                    messages.value = lastMessages;
+                    loadingMessages.value = false;
 
-                    await this.$nextTick();
-                    this.$refs.chatContainer.scrollTop = this.$refs.chatContainer.scrollHeight;
+                    await nextTick();
+                    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
                 });
         } catch (error) {
             // TODO...
         }
-        this.loadingUser = false;
-        this.loadingMessages = false;
-    },
-    unmounted() {
-        unsubscribeFromAuth();
-        unsubscribeFromChat();
-    },
+        loadingMessages.value = false;
+    });
+
+    onUnmounted(() => unsubscribeFromChat());
+
+    return {
+        messages,
+        loadingMessages,
+    }
+}
+
+function usePrivateChatMessageForm(user, otherId) {
+    const newMessage = ref({
+        content: '',
+    });
+
+    async function handleSubmit() {
+        try {
+            sendPrivateChatMessage(
+                user.value.id,
+                otherId,
+                newMessage.value.content,
+            );
+        } catch (error) {
+            // TODO...
+        }
+        
+        newMessage.value.content = '';
+    }
+
+    return {
+        newMessage,
+        handleSubmit,
+    }
 }
 </script>
 
@@ -100,20 +90,25 @@ export default {
 
     <section class="overflow-y-auto h-100 p-4 mb-4 border border-gray-200 rounded" ref="chatContainer">
         <h2 class="sr-only">Lista de mensajes</h2>
-        <ol class="flex flex-col items-start gap-4">
-            <li
-                v-for="message in messages"
-                :key="message.id"
-                class="p-4 rounded"
-                :class="{
-                    'bg-gray-100': user.id !== message.sender_id,
-                    'self-end bg-green-100': user.id === message.sender_id,
-                }"
-            >
-                <div class="mb-1">{{ message.content }}</div>
-                <div class="text-sm text-gray-700">{{ message.created_at }}</div>
-            </li>
-        </ol>
+        <template v-if="!loadingMessages">
+            <ol class="flex flex-col items-start gap-4">
+                <li
+                    v-for="message in messages"
+                    :key="message.id"
+                    class="p-4 rounded"
+                    :class="{
+                        'bg-gray-100': user.id !== message.sender_id,
+                        'self-end bg-green-100': user.id === message.sender_id,
+                    }"
+                >
+                    <div class="mb-1">{{ message.content }}</div>
+                    <div class="text-sm text-gray-700">{{ message.created_at }}</div>
+                </li>
+            </ol>
+        </template>
+        <template v-else>
+            <AppLoader />
+        </template>
     </section>
     <section>
         <h2 class="sr-only">Enviar un mensaje</h2>

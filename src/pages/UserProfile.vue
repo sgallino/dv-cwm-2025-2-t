@@ -1,36 +1,11 @@
-<script>
+<script setup>
 import AppH1 from '../components/AppH1.vue';
 import AppLoader from '../components/AppLoader.vue';
-import { getUserProfileById } from '../services/user-profiles';
+import { useRoute } from 'vue-router';
+import useUserProfile from '../composables/useUserProfile';
 
-export default {
-    name: 'UserProfile',
-    components: { AppH1, AppLoader, },
-    data() {
-        return {
-            user: {
-                id: null,
-                email: null,
-                display_name: null,
-                bio: null,
-                career: null,
-            },
-            loading: false,
-        }
-    },
-    async mounted() {
-        try {
-            this.loading = true;
-
-            // this.$route nos da acceso a la ruta en la que estamos. Útil, por ejemplo, para obtener el parámetro
-            // de ruta.
-            this.user = await getUserProfileById(this.$route.params.id);
-        } catch (error) {
-            // TODO
-        }
-        this.loading = false;
-    },
-}
+const route = useRoute();
+const { user, loading } = useUserProfile(route.params.id);
 </script>
 
 <template>
