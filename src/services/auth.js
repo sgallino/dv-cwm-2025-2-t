@@ -1,3 +1,4 @@
+import { deleteFile, uploadFile } from "./storage";
 import { supabase } from "./supabase";
 import { createUserProfile, getUserProfileById, updateUserProfile } from "./user-profiles";
 
@@ -166,6 +167,35 @@ export async function updateAuthUser(data) {
         setUser(data);
     } catch (error) {
         // TODO
+    }
+}
+
+/**
+ * 
+ * @param {File|Blob} file 
+ */
+export async function updateAuthUserAvatar(file) {
+    try {
+        // Generamos un nombre para el avatar.
+        // Por razones que después vamos a mencionar, vamos a querer que cada imagen tenga un nombre único.
+        // Es decir, vamos a querer que tengan el siguiente formato:
+        //  '${userId}/${UUID}.${extension}'
+        const photo_url = `${user.id}/${crypto.randomUUID()}.jpg`; // TODO: Contemplar otras extensiones.
+
+        await uploadFile(photo_url, file);
+
+        await updateUserProfile(user.id, { photo_url });
+
+        // Borramos la foto vieja del usuario. Noten que lo llamamos *antes* de actualizar los datos locales del 
+        // usuario (el setUser).
+        if(user.photo_url) {
+            deleteFile(user.photo_url);
+        }
+
+        setUser({ photo_url });
+    } catch (error) {
+        console.error('[auth.js updateAuthUserAvatar] Error al cambiar la imagen de perfil.', error);
+        throw error;
     }
 }
 

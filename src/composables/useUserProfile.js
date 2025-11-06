@@ -8,6 +8,7 @@ export default function useUserProfile(id) {
         display_name: null,
         bio: null,
         career: null,
+        photo_url: null,
     });
     const loading = ref(false);
 

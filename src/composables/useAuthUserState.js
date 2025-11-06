@@ -10,6 +10,7 @@ export default function useAuthUserState() {
         display_name: null,
         bio: null,
         career: null,
+        photo_url: null,
     });
 
     onMounted(() => unsubscribeFromAuth = subscribeToAuthStateChanges(newUserState => user.value = newUserState));
