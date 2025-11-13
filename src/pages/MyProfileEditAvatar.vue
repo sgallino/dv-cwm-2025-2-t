@@ -1,12 +1,10 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import AppButton from '../components/AppButton.vue';
 import AppH1 from '../components/AppH1.vue';
-import { updateAuthUser, updateAuthUserAvatar } from '../services/auth';
-import useAuthUserState from '../composables/useAuthUserState';
+import { updateAuthUserAvatar } from '../services/auth';
 
 // const user = useAuthUserState();
-
 const { imageData, loading, handleSubmit, handleImageChange } = useEditAvatarForm();
 
 function useEditAvatarForm() {

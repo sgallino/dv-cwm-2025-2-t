@@ -40,8 +40,16 @@ let user = {
     display_name: null,
     bio: null,
     career: null,
+    photo_url: null,
 }
 let observers = [];
+
+// Leemos los datos de localStorage del usuario. Si existen, marcamos al usuario como autenticado.
+// Esto *no* reemplaza la verificación que hace luego Supabase. Pero nos ayuda a que no se redireccione el
+// usuario al login cada vez.
+if(localStorage.getItem('user')) {
+    user = JSON.parse(localStorage.getItem('user'));
+}
 
 // Tratamos de cargar los datos del usuario, si es que ya está autenticado.
 loadCurrentUserAuthState();
@@ -152,6 +160,7 @@ export async function logout() {
         display_name: null,
         bio: null,
         career: null,
+        photo_url: null,
     });
 }
 
@@ -252,4 +261,10 @@ function setUser(data) {
         ...data,
     }
     notifyAll();
+
+    if(user.id !== null) {
+        localStorage.setItem('user', JSON.stringify(user));
+    } else {
+        localStorage.removeItem('user');
+    }
 }
