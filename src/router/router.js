@@ -1,5 +1,5 @@
 // Este es nuestro archivo de routing.
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
 import { subscribeToAuthStateChanges } from "../services/auth";
 import Home from "../pages/Home.vue";
 import GlobalChat from "../pages/GlobalChat.vue";
@@ -38,7 +38,7 @@ const routes = [
 const router = createRouter({
     // routes: routes,
     routes,
-    history: createWebHistory(),
+    history: createWebHashHistory(),
 });
 
 // Protección de rutas para usuarios autenticados.
